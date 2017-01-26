@@ -27,21 +27,23 @@ class App extends React.Component{
     }
 }
 
+
 class ProductList extends React.Component{
     render(){
         var products=this.props.products.map(product =>
         <Product key={product._links.self.href} product={product}/>
         );
         return(
-            <table>
-                <tbody>
-                    <tr>
-                        <th>Name</th>
-                        <th>Price</th>
-                    </tr>
-                    {products}
-                </tbody>
-            </table>
+                <table>
+                    <tbody>
+                        <tr>
+                            <th>Name</th>
+                            <th>Price</th>
+                            <th>Picture</th>
+                        </tr>
+                        {products}
+                    </tbody>
+                </table>
         )
     }
 }
@@ -52,6 +54,7 @@ class Product extends React.Component{
             <tr>
                 <td>{this.props.product.name}</td>
                 <td>{this.props.product.price}</td>
+                <td><img src="https://d30y9cdsu7xlg0.cloudfront.net/png/16757-200.png" alt="X" width="50px" height="50px"/></td>
             </tr>
         )
     }

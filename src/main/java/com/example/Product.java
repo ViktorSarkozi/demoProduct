@@ -17,12 +17,18 @@ public class Product {
 
     private @Id @GeneratedValue long id;
     private String name;
-    //private Image img;
+//    private Image img;
     private int price;
 
     private Product(){}
 
-    public Product(String name, int price){
+    /*public Product(String name, Image img,int price){
+        this.name=name;
+        this.img=img;
+        this.price=price;
+    }*/
+
+    public Product(String name,int price){
         this.name=name;
         this.price=price;
     }
