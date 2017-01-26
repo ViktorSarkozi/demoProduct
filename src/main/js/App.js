@@ -29,7 +29,7 @@ class App extends React.Component{
 
 class ProductList extends React.Component{
     render(){
-        var products=this.props.products.map(product=>
+        var products=this.props.products.map(product =>
         <Product key={product._links.self.href} product={product}/>
         );
         return(

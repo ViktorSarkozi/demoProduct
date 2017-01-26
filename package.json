@@ -1,26 +1,23 @@
 {
   "name": "demoProduct",
-  "version": "1.0.0",
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:ViktorSarkozi/demoProduct.git"
-  },
-  "homepage": "https://github.com/ViktorSarkozi/demoProduct.git",
-  "description": "Basic Spring+ReactRedux example",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "version": "0.1.0",
+  "description": "Demo of ReactJS + Spring Data REST",
   "keywords": [
-    "react",
-    "spring"
+    "rest",
+    "hateoas",
+    "spring",
+    "data",
+    "react"
   ],
   "author": "ViktorS",
   "license": "UNLICENSED",
+  "scripts": {
+    "watch": "webpack --watch -d"
+  },
   "dependencies": {
     "react": "^15.4.2",
     "react-dom": "^15.4.2",
-    "rest": "^2.0.0",
+    "rest": "^1.3.1", //2.0.0-t nem szereti!!!
     "webpack": "^1.14.0"
   },
   "devDependencies": {
