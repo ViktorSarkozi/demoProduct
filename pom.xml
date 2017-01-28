@@ -53,6 +53,11 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-websocket</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -95,6 +100,15 @@
 						</goals>
 					</execution>
 				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>com.rimerosolutions.maven.plugins</groupId>
+				<artifactId>wrapper-maven-plugin</artifactId>
+				<version>0.0.4</version>
+				<configuration>
+					<mavenVersion>3.3.3</mavenVersion>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

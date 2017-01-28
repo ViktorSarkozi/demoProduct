@@ -5,23 +5,27 @@
 
 const React = require('react');
 const ReactDOM = require('react-dom');
+const when = require('when');
 const client = require('./client');
 
 const follow = require('./follow');
-const root = '/api';
 
-const when = require('when');
+var stompClient = require('./websocket-listener');
+
+const root = '/api';
 
 class App extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = {products: [], attributes: [], pageSize: 2, links: {}};
+        this.state = {products: [], attributes: [], page: 1,pageSize: 2, links: {}};
         this.updatePageSize = this.updatePageSize.bind(this);
         this.onCreate = this.onCreate.bind(this);
         this.onUpdate = this.onUpdate.bind(this);
         this.onDelete = this.onDelete.bind(this);
         this.onNavigate = this.onNavigate.bind(this);
+        this.refreshCurrentPage = this.refreshCurrentPage.bind(this);
+        this.refreshAndGoToLastPage = this.refreshAndGoToLastPage.bind(this);
     }
 
     loadFromServer(pageSize) {
@@ -48,6 +52,7 @@ class App extends React.Component {
             return when.all(productPromises);
         }).done(products=> {
             this.setState({
+                page: this.page,
                 products: products,
                 attributes: Object.keys(this.schema.properties),
                 pageSize: pageSize,
@@ -57,20 +62,14 @@ class App extends React.Component {
     }
 
     onCreate(newProduct) {
-        follow(client, root, ['products']).then(productCollection=> {
+        follow(client, root, ['products']).done(response=> {
             return client({
                 method: 'POST',
-                path: productCollection.entity._links.self.href,
+                path: response.entity._links.self.href,
                 entity: newProduct,
                 headers: {'Content-Type': 'application/json'}
             })
-        }).then(response=> {
-            return follow(client, root, [{
-                rel: 'products', params: {'size': this.state.pageSize}
-            }]);
-        }).done(response=> {
-            this.onNavigate(response.entity._links.last.href);
-        });
+        })
     }
 
     onUpdate(product, updatedProduct) {
@@ -83,7 +82,7 @@ class App extends React.Component {
                 'If-Match': product.headers.Etag
             }
         }).done(response=> {
-            this.loadFromServer(this.state.pageSize);
+
         }, response=> {
             if (response.status.code === 412) {
                 alert('DENIED: Unable to update ' +
@@ -93,9 +92,7 @@ class App extends React.Component {
     }
 
     onDelete(product) {
-        client({method: 'DELETE', path: product._links.self.href}).done(response=> {
-            this.loadFromServer(this.state.pageSize);
-        });
+        client({method: 'DELETE', path: product._links.self.href});
     }
 
     onNavigate(navUri) {
@@ -104,6 +101,8 @@ class App extends React.Component {
             path: navUri
         }).then(productCollection => {
             this.links = productCollection.entity._links;
+            this.page = productCollection.entity.page;
+
             return productCollection.entity._embedded.products.map(product=>
                 client({
                     method: 'GET',
@@ -114,6 +113,7 @@ class App extends React.Component {
             return when.all(productPromises);
         }).done(products=> {
             this.setState({
+                page: this.page,
                 products: products,
                 attributes: Object.keys(this.schema.properties),
                 pageSize: this.state.pageSize,
@@ -128,15 +128,66 @@ class App extends React.Component {
         }
     }
 
+    refreshAndGoToLastPage(message){
+        follow(client,root,[{
+            rel:'products',
+            params:{size:this.state.pageSize}
+        }]).done(response=>{
+            if(response.entity._links.last!==undefined){
+                this.onNavigate(response.entity._links.last.href);
+            }else{
+                this.onNavigate(response.entity._links.self.href);
+            }
+        })
+    }
+
+    refreshCurrentPage(message){
+        follow(client,root,[{
+            rel:'products',
+            params:{
+                size: this.state.pageSize,
+                page: this.state.page.number
+            }
+        }]).then(productCollection =>{
+            this.links = productCollection.entity._links;
+            this.page = productCollection.entity.page;
+
+            return productCollection.entity._embedded.products.map(product=>{
+                return client({
+                    method: 'GET',
+                    path: product._links.self.href
+                })
+            });
+        }).then(productPromises =>{
+            return when.all(productPromises);
+        }).then(products =>{
+            this.setState({
+                page: this.page,
+                products: products,
+                attributes: Object.keys(this.schema.properties),
+                pageSize: this.state.pageSize,
+                links: this.links
+            });
+        });
+    }
+
     componentDidMount() {
         this.loadFromServer(this.state.pageSize);
+        stompClient.register([
+            {route: '/topic/newProduct',callback: this.refreshAndGoToLastPage},
+            {route: '/topic/updateProduct',callback: this.refreshCurrentPage},
+            {route: '/topic/deleteProduct',callback: this.refreshCurrentPage}
+        ]);
     }
+
+
 
     render() {
         return (
             <div>
                 <CreateDialog attributes={this.state.attributes} onCreate={this.onCreate}/>
                 <ProductList
+                    page={this.state.page}
                     products={this.state.products}
                     links={this.state.links}
                     pageSize={this.state.pageSize}
@@ -196,7 +247,7 @@ class CreateDialog extends React.Component {
             </div>
         )
     }
-};
+}
 
 class UpdateDialog extends React.Component {
     constructor(props) {
@@ -223,11 +274,11 @@ class UpdateDialog extends React.Component {
             </p>
         );
 
-        var dialogId = "updatedProduct-"
+        var dialogId = "updateProduct-"
             + this.props.product.entity._links.self.href;
 
         return (
-            <div key={this.props.product.entity._links.self.href}>
+            <div>
                 <a href={"#" + dialogId}>Update</a>
                 <div id={dialogId} className="modalDialog">
                     <div>
@@ -244,7 +295,7 @@ class UpdateDialog extends React.Component {
             </div>
         )
     }
-};
+}
 
 
 class ProductList extends React.Component {
@@ -290,6 +341,9 @@ class ProductList extends React.Component {
     }
 
     render() {
+        var pageInfo = this.props.page.hasOwnProperty("number")?
+            <h3>Products - Page {this.props.page.number+1} of {this.props.page.totalPages}</h3> : null;
+
         var products = this.props.products.map(product =>
             <Product key={product.entity._links.self.href}
                      product={product}
@@ -315,6 +369,7 @@ class ProductList extends React.Component {
 
         return (
             <div>
+                {pageInfo}
                 <input ref="pageSize" defaultValue={this.props.pageSize} onInput={this.handleInput}/>
                 <table>
                     <tbody>
