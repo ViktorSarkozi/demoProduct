@@ -1,16 +1,13 @@
-/**
- * Created by Lenovo on 2017. 01. 26..
- */
-'use strict'
+'use strict';
 
 const React = require('react');
-const ReactDOM = require('react-dom');
+const ReactDOM = require('react-dom')
 const when = require('when');
 const client = require('./client');
 
 const follow = require('./follow');
 
-var stompClient = require('./websocket-listener');
+const stompClient = require('./websocket-listener');
 
 const root = '/api';
 
@@ -42,6 +39,7 @@ class App extends React.Component {
                 return productCollection;
             });
         }).then(productCollection=> {
+            this.page = productCollection.entity.page;
             return productCollection.entity._embedded.products.map(product=>
                 client({
                     method: 'GET',
@@ -63,7 +61,7 @@ class App extends React.Component {
 
     onCreate(newProduct) {
         follow(client, root, ['products']).done(response=> {
-            return client({
+            client({
                 method: 'POST',
                 path: response.entity._links.self.href,
                 entity: newProduct,
@@ -92,7 +90,7 @@ class App extends React.Component {
     }
 
     onDelete(product) {
-        client({method: 'DELETE', path: product._links.self.href});
+        client({method: 'DELETE', path: product.entity._links.self.href});
     }
 
     onNavigate(navUri) {
@@ -214,11 +212,9 @@ class CreateDialog extends React.Component {
             newProduct[attribute] = ReactDOM.findDOMNode(this.refs[attribute]).value.trim();
         });
         this.props.onCreate(newProduct);
-
         this.props.attributes.forEach(attribute=> {
             ReactDOM.findDOMNode(this.refs[attribute]).value = '';
         });
-
         window.location = '#';
     }
 
@@ -228,13 +224,13 @@ class CreateDialog extends React.Component {
                 <input type="text" placeholder={attribute} ref={attribute} className="field"/>
             </p>
         );
-
         return (
             <div>
                 <a href="#createProduct">Create</a>
 
                 <div id="createProduct" className="modalDialog">
                     <div>
+
                         <a href="#" title="Close" className="close">X</a>
                         <h2>Create new product</h2>
 
@@ -274,8 +270,7 @@ class UpdateDialog extends React.Component {
             </p>
         );
 
-        var dialogId = "updateProduct-"
-            + this.props.product.entity._links.self.href;
+        var dialogId = "updateProduct-" + this.props.product.entity._links.self.href;
 
         return (
             <div>
@@ -315,8 +310,7 @@ class ProductList extends React.Component {
         if (/^[0-9]+$/.test(pageSize)) {
             this.props.updatePageSize(pageSize);
         } else {
-            ReactDOM.findDOMNode(this.refs.pageSize).value =
-                pageSize.substring(0, pageSize.length - 1);
+            ReactDOM.findDOMNode(this.refs.pageSize).value = pageSize.substring(0, pageSize.length - 1);
         }
     }
 
@@ -376,7 +370,7 @@ class ProductList extends React.Component {
                     <tr>
                         <th>Name</th>
                         <th>Price</th>
-                        <th>Img</th>
+                        <th></th>
                         <th></th>
                         <th></th>
                     </tr>

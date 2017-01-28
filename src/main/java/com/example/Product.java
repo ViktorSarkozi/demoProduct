@@ -3,10 +3,7 @@ package com.example;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Version;
+import javax.persistence.*;
 
 /**
  * Created by Lenovo on 2017. 01. 26..
@@ -22,11 +19,14 @@ public class Product {
 
     private @Version @JsonIgnore Long version;
 
+    private @ManyToOne Manager manager;
+
     private Product(){}
 
 
-    public Product(String name,int price){
+    public Product(String name,int price,Manager manager){
         this.name=name;
         this.price=price;
+        this.manager=manager;
     }
 }
