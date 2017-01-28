@@ -15,7 +15,7 @@ class App extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = {products: [], attributes: [], page: 1,pageSize: 2, links: {}};
+        this.state = {products: [], attributes: [], page: 1, pageSize: 2, links: {}};
         this.updatePageSize = this.updatePageSize.bind(this);
         this.onCreate = this.onCreate.bind(this);
         this.onUpdate = this.onUpdate.bind(this);
@@ -34,6 +34,17 @@ class App extends React.Component {
                 path: productCollection.entity._links.profile.href,
                 headers: {'Accept': 'application/schema+json'}
             }).then(schema=> {
+
+                Object.keys(schema.entity.properties).forEach(function (property) {
+                    if (schema.entity.properties[property].hasOwnProperty('format') &&
+                        schema.entity.properties[property].format === 'uri') {
+                        delete schema.entity.properties[property];
+                    }
+                    if (schema.entity.properties[property].hasOwnProperty('$ref')) {
+                        delete schema.entity.properties[property];
+                    }
+                });
+
                 this.schema = schema.entity;
                 this.links = productCollection.entity._links;
                 return productCollection;
@@ -82,6 +93,10 @@ class App extends React.Component {
         }).done(response=> {
 
         }, response=> {
+            if (response.status.code === 403) {
+                alert('ACCESS DENIED: You are not authorized to update' +
+                    product.entity._links.self.href);
+            }
             if (response.status.code === 412) {
                 alert('DENIED: Unable to update ' +
                     product.entity._links.self.href + '. Your copy is stale.');
@@ -90,8 +105,16 @@ class App extends React.Component {
     }
 
     onDelete(product) {
-        client({method: 'DELETE', path: product.entity._links.self.href});
+        client({method: 'DELETE', path: product.entity._links.self.href}
+        ).done(response => {},
+            response => {
+                if (response.status.code === 403) {
+                    alert('ACCESS DENIED: You are not authorized to delete ' +
+                        product.entity._links.self.href);
+                }
+            });
     }
+
 
     onNavigate(navUri) {
         client({
@@ -126,39 +149,39 @@ class App extends React.Component {
         }
     }
 
-    refreshAndGoToLastPage(message){
-        follow(client,root,[{
-            rel:'products',
-            params:{size:this.state.pageSize}
-        }]).done(response=>{
-            if(response.entity._links.last!==undefined){
+    refreshAndGoToLastPage(message) {
+        follow(client, root, [{
+            rel: 'products',
+            params: {size: this.state.pageSize}
+        }]).done(response=> {
+            if (response.entity._links.last !== undefined) {
                 this.onNavigate(response.entity._links.last.href);
-            }else{
+            } else {
                 this.onNavigate(response.entity._links.self.href);
             }
         })
     }
 
-    refreshCurrentPage(message){
-        follow(client,root,[{
-            rel:'products',
-            params:{
+    refreshCurrentPage(message) {
+        follow(client, root, [{
+            rel: 'products',
+            params: {
                 size: this.state.pageSize,
                 page: this.state.page.number
             }
-        }]).then(productCollection =>{
+        }]).then(productCollection => {
             this.links = productCollection.entity._links;
             this.page = productCollection.entity.page;
 
-            return productCollection.entity._embedded.products.map(product=>{
+            return productCollection.entity._embedded.products.map(product=> {
                 return client({
                     method: 'GET',
                     path: product._links.self.href
                 })
             });
-        }).then(productPromises =>{
+        }).then(productPromises => {
             return when.all(productPromises);
-        }).then(products =>{
+        }).then(products => {
             this.setState({
                 page: this.page,
                 products: products,
@@ -172,12 +195,11 @@ class App extends React.Component {
     componentDidMount() {
         this.loadFromServer(this.state.pageSize);
         stompClient.register([
-            {route: '/topic/newProduct',callback: this.refreshAndGoToLastPage},
-            {route: '/topic/updateProduct',callback: this.refreshCurrentPage},
-            {route: '/topic/deleteProduct',callback: this.refreshCurrentPage}
+            {route: '/topic/newProduct', callback: this.refreshAndGoToLastPage},
+            {route: '/topic/updateProduct', callback: this.refreshCurrentPage},
+            {route: '/topic/deleteProduct', callback: this.refreshCurrentPage}
         ]);
     }
-
 
 
     render() {
@@ -335,8 +357,8 @@ class ProductList extends React.Component {
     }
 
     render() {
-        var pageInfo = this.props.page.hasOwnProperty("number")?
-            <h3>Products - Page {this.props.page.number+1} of {this.props.page.totalPages}</h3> : null;
+        var pageInfo = this.props.page.hasOwnProperty("number") ?
+            <h3>Products - Page {this.props.page.number + 1} of {this.props.page.totalPages}</h3> : null;
 
         var products = this.props.products.map(product =>
             <Product key={product.entity._links.self.href}
@@ -370,6 +392,7 @@ class ProductList extends React.Component {
                     <tr>
                         <th>Name</th>
                         <th>Price</th>
+                        <th>Manager</th>
                         <th></th>
                         <th></th>
                         <th></th>
@@ -400,6 +423,7 @@ class Product extends React.Component {
             <tr>
                 <td>{this.props.product.entity.name}</td>
                 <td>{this.props.product.entity.price}</td>
+                <td>{this.props.product.entity.manager.name}</td>
                 <td><img src="https://d30y9cdsu7xlg0.cloudfront.net/png/16757-200.png" alt="X" width="50px"
                          height="50px"/></td>
                 <td>

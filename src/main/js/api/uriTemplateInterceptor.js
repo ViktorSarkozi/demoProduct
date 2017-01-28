@@ -17,5 +17,4 @@ define(function(require) {
             }
         }
     });
-
 });

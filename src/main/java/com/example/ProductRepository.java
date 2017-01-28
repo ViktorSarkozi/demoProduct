@@ -11,14 +11,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 public interface ProductRepository extends PagingAndSortingRepository<Product, Long> {
 
     @Override
-    @PreAuthorize("#product?.manager == null " +
-            "or #product?.manager?.name == authentication?.name")
-    Product save(@Param("product") Product product);
+    @PreAuthorize("#product?.manager == null or #product?.manager?.name == authentication?.name")
+    Product save(@Param("product") Product employee);
 
     @Override
-    @PreAuthorize("@productRepository.findOne(#id)?.manager?.name == " +
-            "authentication?.name")
-            void delete(@Param("id") Long id);
+    @PreAuthorize("@productRepository.findOne(#id)?.manager?.name == authentication?.name")
+    void delete(@Param("id") Long id);
 
     @Override
     @PreAuthorize("#product?.manager?.name == authentication?.name")
