@@ -2,9 +2,7 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 
 ### Webpack build ###
-src/main/resources/static/built/
-src/main/resources/static/built/bundle.js
-src/main/resources/static/built/bundle.js.map
+/src/main/resources/static/built/
 
 ### NPM ###
 node_modules/
@@ -30,3 +28,4 @@ nbbuild/
 dist/
 nbdist/
 .nb-gradle/
+

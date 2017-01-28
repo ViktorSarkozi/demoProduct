@@ -10,7 +10,7 @@ import org.springframework.hateoas.EntityLinks;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
-import static com.example.WebSocketConfiguration.MESSAGE_PREFIX;
+import static com.example.WebSocketConfiguration.*;
 
 /**
  * Created by Lenovo on 2017. 01. 27..
@@ -38,7 +38,7 @@ public class EventHandler {
     @HandleAfterDelete
     public void deleteProduct(Product product){
         this.websocket.convertAndSend(
-                MESSAGE_PREFIX+"/deleteProduct"+getPath(product));
+                MESSAGE_PREFIX+"/deleteProduct",getPath(product));
     }
 
     @HandleAfterSave
