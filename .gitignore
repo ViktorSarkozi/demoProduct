@@ -29,3 +29,7 @@ dist/
 nbdist/
 .nb-gradle/
 
+### run ###
+!/run.lnk
+mongodb/
+images/

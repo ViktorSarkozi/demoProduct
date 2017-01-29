@@ -1,16 +1,26 @@
 {
   "name": "demoProduct",
-  "version": "0.1.0",
-  "description": "Demo of ReactJS + Spring Data REST",
+  "version": "0.1.2",
+  "description": "demoProduct",
+  "repository": {
+    "type": "git",
+    "url-ssh": "git@github.com:ViktorSarkozi/demoProduct.git",
+    "url":"https://github.com/ViktorSarkozi/demoProduct.git"
+  },
   "keywords": [
     "rest",
     "hateoas",
     "spring",
     "data",
-    "react"
+    "react",
+    "security"
   ],
   "author": "ViktorS",
   "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/spring-guides/tut-react-and-spring-data-rest/issues"
+  },
+  "homepage": "https://github.com/ViktorSarkozi/demoProduct",
   "dependencies": {
     "react": "^15.3.2",
     "react-dom": "^15.3.2",
